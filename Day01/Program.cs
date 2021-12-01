@@ -19,24 +19,10 @@ Console.WriteLine($"Time: {sw.ElapsedMilliseconds}ms");
 
 int Solve1(int[] data)
 {
-    var result = 0;
-
-    for (int i = 0; i < data.Length - 1; i++)
-    {
-        result += (data[i + 1] > data[i]) ? 1 : 0;
-    }
-
-    return result;
+    return data.Aggregate((a, b) => b > a ? 1 : 0 );
 }
 
 int Solve2(int[] data)
 {
-    var result = 0;
-
-    for (int i = 2; i < data.Length - 1; i++)
-    {
-        result += (data[i - 1] + data[i] + data[i + 1] > data[i - 2] + data[i - 1] + data[i]) ? 1 : 0;
-    }
-
-    return result;
+    return data.Skip(2).Select((_, i) => (data[i - 1] + data[i] + data[i + 1] > data[i - 2] + data[i - 1] + data[i]) ? 1 : 0).Sum();
 }
