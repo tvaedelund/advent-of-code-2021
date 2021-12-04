@@ -1,8 +1,11 @@
-﻿
+﻿using System.Diagnostics;
+
 var input = File.ReadAllLines("input.txt");
 
-// Console.WriteLine($"Part1: {Solve1(input)}");
+var sw = Stopwatch.StartNew();
+Console.WriteLine($"Part1: {Solve1(input)}");
 Console.WriteLine($"Part2: {Solve2(input)}");
+Console.WriteLine($"TID DET TOG: {sw.ElapsedMilliseconds}ms");
 
 int Solve1(string[] data)
 {
@@ -15,10 +18,10 @@ int Solve1(string[] data)
     {
         boards = PlayMumber(boards, num);
 
-        var hasWinner = HasWinner(boards, new());
-        if (hasWinner.win)
+        var player = HasWinner(boards, new());
+        if (player.win)
         {
-            result = int.Parse(num) * GetBoardValue(boards, hasWinner.bNum.First());
+            result = int.Parse(num) * GetBoardValue(boards, player.bNum.First());
             break;
         }
     }
@@ -31,25 +34,23 @@ int Solve2(string[] data)
     var boards = GetBoards(data);
     var numbers = data.First().Split(',');
 
-    var rounds = new List<(int winningNum, int boardValue, int boardNum)>();
-    var skip = new List<int>();
+    var wins = new List<(int winningNum, int boardValue, int boardNum)>();
 
     foreach (var num in numbers)
     {
         boards = PlayMumber(boards, num);
 
-        var winner = HasWinner(boards, skip);
-        if (winner.win)
+        var player = HasWinner(boards, wins.Select(w => w.boardNum).ToList());
+        if (player.win)
         {
-            foreach (var win in winner.bNum)
+            foreach (var win in player.bNum)
             {
-                skip.Add(win);
-                rounds.Add((int.Parse(num), GetBoardValue(boards, win), win));
+                wins.Add((int.Parse(num), GetBoardValue(boards, win), win));
             }
         }
     }
 
-    var lastWinner = rounds.Last();
+    var lastWinner = wins.Last();
 
     return lastWinner.winningNum * lastWinner.boardValue;
 }
@@ -95,6 +96,7 @@ List<string[][]> PlayMumber(List<string[][]> boards, string num)
     {
         if (skip.Any(s => s == b))
         {
+            // Already won on this board so skip
             continue;
         }
 
