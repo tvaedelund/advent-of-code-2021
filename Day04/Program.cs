@@ -24,18 +24,6 @@ int Solve(string[] data)
     return result;
 }
 
-int GetBoardValue(string[][][] boards, int bNum)
-{
-    var result = 0;
-
-    for (int r = 0; r < boards[bNum].Length; r++)
-    {
-        result += boards[bNum][r].Where(x => !string.IsNullOrWhiteSpace(x)).Sum(x => int.Parse(x));
-    }
-
-    return result;
-}
-
 string[][][] GetBoards(IEnumerable<string> data)
 {
     return data
@@ -94,4 +82,16 @@ string[][][] PlayMumber(string[][][] boards, string num)
     }
 
     return (false, 0);
+}
+
+int GetBoardValue(string[][][] boards, int bNum)
+{
+    var result = 0;
+
+    for (int r = 0; r < boards[bNum].Length; r++)
+    {
+        result += boards[bNum][r].Where(x => !string.IsNullOrWhiteSpace(x)).Sum(x => int.Parse(x));
+    }
+
+    return result;
 }
