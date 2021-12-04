@@ -1,8 +1,10 @@
-﻿var input = File.ReadAllLines("input.txt");
+﻿
+var input = File.ReadAllLines("input.txt");
 
-Console.WriteLine($"Part1: {Solve(input)}");
+// Console.WriteLine($"Part1: {Solve1(input)}");
+Console.WriteLine($"Part2: {Solve2(input)}");
 
-int Solve(string[] data)
+int Solve1(string[] data)
 {
     var boards = GetBoards(data);
     var numbers = data.First().Split(',');
@@ -13,10 +15,10 @@ int Solve(string[] data)
     {
         boards = PlayMumber(boards, num);
 
-        var hasWinner = HasWinner(boards);
+        var hasWinner = HasWinner(boards, new());
         if (hasWinner.win)
         {
-            result = int.Parse(num) * GetBoardValue(boards, hasWinner.bNum);
+            result = int.Parse(num) * GetBoardValue(boards, hasWinner.bNum.First());
             break;
         }
     }
@@ -24,7 +26,35 @@ int Solve(string[] data)
     return result;
 }
 
-string[][][] GetBoards(IEnumerable<string> data)
+int Solve2(string[] data)
+{
+    var boards = GetBoards(data);
+    var numbers = data.First().Split(',');
+
+    var rounds = new List<(int winningNum, int boardValue, int boardNum)>();
+    var skip = new List<int>();
+
+    foreach (var num in numbers)
+    {
+        boards = PlayMumber(boards, num);
+
+        var winner = HasWinner(boards, skip);
+        if (winner.win)
+        {
+            foreach (var win in winner.bNum)
+            {
+                skip.Add(win);
+                rounds.Add((int.Parse(num), GetBoardValue(boards, win), win));
+            }
+        }
+    }
+
+    var lastWinner = rounds.Last();
+
+    return lastWinner.winningNum * lastWinner.boardValue;
+}
+
+List<string[][]> GetBoards(IEnumerable<string> data)
 {
     return data
         .Skip(1)
@@ -35,12 +65,12 @@ string[][][] GetBoards(IEnumerable<string> data)
             .Select(x => x.Value.Split(' ', StringSplitOptions.RemoveEmptyEntries))
             .ToArray()
         )
-        .ToArray();
+        .ToList();
 }
 
-string[][][] PlayMumber(string[][][] boards, string num)
+List<string[][]> PlayMumber(List<string[][]> boards, string num)
 {
-    for (int b = 0; b < boards.Length; b++)
+    for (int b = 0; b < boards.Count; b++)
     {
         for (int r = 0; r < boards[b].Length; r++)
         {
@@ -57,16 +87,23 @@ string[][][] PlayMumber(string[][][] boards, string num)
     return boards;
 }
 
-(bool win, int bNum) HasWinner(string[][][] boards)
+(bool win, List<int> bNum) HasWinner(List<string[][]> boards, List<int> skip)
 {
-    for (int b = 0; b < boards.Length; b++)
+    var winners = new List<int>();
+
+    for (int b = 0; b < boards.Count; b++)
     {
+        if (skip.Any(s => s == b))
+        {
+            continue;
+        }
+
         for (int r = 0; r < boards[b].Length; r++)
         {
             if (boards[b][r].All(x => x == string.Empty))
             {
                 // Horizontal winner
-                return (true, b);
+                winners.Add(b);
             }
 
             // This works since the board is perfect square (5x5)...
@@ -76,22 +113,26 @@ string[][][] PlayMumber(string[][][] boards, string num)
             if (col.All(x => x == string.Empty))
             {
                 // Vertical winner
-                return (true, b);
+                winners.Add(b);
             }
         }
     }
 
-    return (false, 0);
-}
-
-int GetBoardValue(string[][][] boards, int bNum)
-{
-    var result = 0;
-
-    for (int r = 0; r < boards[bNum].Length; r++)
+    if (winners.Any())
     {
-        result += boards[bNum][r].Where(x => !string.IsNullOrWhiteSpace(x)).Sum(x => int.Parse(x));
+        return (true, winners);
     }
 
-    return result;
+    return (false, new());
+}
+
+int GetBoardValue(List<string[][]> boards, int bNum)
+{
+    return Enumerable
+        .Range(0, boards[bNum].Length)
+        .Select(r => boards[bNum][r]
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Sum(x => int.Parse(x))
+        )
+        .Sum();
 }
