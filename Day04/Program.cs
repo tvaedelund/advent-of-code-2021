@@ -3,33 +3,12 @@
 var input = File.ReadAllLines("input.txt");
 
 var sw = Stopwatch.StartNew();
-Console.WriteLine($"Part1: {Solve1(input)}");
-Console.WriteLine($"Part2: {Solve2(input)}");
+var result = Solve(input);
+Console.WriteLine($"Part1: {result.p1}");
+Console.WriteLine($"Part2: {result.p2}");
 Console.WriteLine($"TID DET TOG: {sw.ElapsedMilliseconds}ms");
 
-int Solve1(string[] data)
-{
-    var boards = GetBoards(data);
-    var numbers = data.First().Split(',');
-
-    var result = 0;
-
-    foreach (var num in numbers)
-    {
-        boards = PlayMumber(boards, num);
-
-        var player = HasWinner(boards, new());
-        if (player.win)
-        {
-            result = int.Parse(num) * GetBoardValue(boards, player.bNum.First());
-            break;
-        }
-    }
-
-    return result;
-}
-
-int Solve2(string[] data)
+(int p1, int p2) Solve(string[] data)
 {
     var boards = GetBoards(data);
     var numbers = data.First().Split(',');
@@ -50,9 +29,10 @@ int Solve2(string[] data)
         }
     }
 
+    var firstWinner = wins.First();
     var lastWinner = wins.Last();
 
-    return lastWinner.winningNum * lastWinner.boardValue;
+    return (firstWinner.winningNum * firstWinner.boardValue, lastWinner.winningNum * lastWinner.boardValue);
 }
 
 List<string[][]> GetBoards(IEnumerable<string> data)
