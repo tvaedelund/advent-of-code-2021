@@ -1,29 +1,44 @@
-﻿var input = File.ReadAllText("input.txt")
+﻿using System.Diagnostics;
+
+var sw = Stopwatch.StartNew();
+
+var input = File.ReadAllText("input.txt")
     .Split(',')
     .Select(int.Parse)
+    .GroupBy(x => x)
+    .Select(g => new Generation
+    {
+        age = g.Key,
+        cnt = g.Count()
+    })
     .ToList();
 
-Console.WriteLine($"Part1: {Solve(input)}");
+Console.WriteLine($"Part1: {Solve(input, 80)}");
+Console.WriteLine($"Part2: {Solve(input, 256)}");
+Console.WriteLine($"TID DET TOG: {sw.ElapsedMilliseconds}ms");
 
-int Solve(List<int> data)
+long Solve(List<Generation> data, int days)
 {
-    for (int day = 1; day <= 80; day++)
+    for (int day = 1; day <= days; day++)
     {
-        var newBorns = new List<int>();
-        data = data.Select(f =>
+        data = data.Select(x => new Generation
         {
-            if (--f < 0)
-            {
-                newBorns.Add(8);
-                return 6;
-            }
-
-            return f;
+            age = x.age - 1,
+            cnt = x.cnt
         })
         .ToList();
 
-        data.AddRange(newBorns);
+        var babies = data.Where(x => x.age == -1);
+        data.Add(new Generation { age = 8, cnt = babies.Sum(x => x.cnt) });
+        data.Add(new Generation { age = 6, cnt = babies.Sum(x => x.cnt) });
+        data.RemoveAll(x => x.age == -1);
     }
 
-    return data.Count();
+    return data.Sum(x => x.cnt);
 }
+
+record Generation
+{
+    public int age { get; set; }
+    public long cnt { get; set; }
+};
