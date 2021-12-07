@@ -31,5 +31,5 @@ Console.WriteLine($"TID DET TOG: {sw.ElapsedMilliseconds}ms");
 
 long GetFuel(int fuel)
 {
-    return (fuel * (fuel + 1l )) / 2;
+    return (fuel * (fuel + 1L )) / 2;
 }
