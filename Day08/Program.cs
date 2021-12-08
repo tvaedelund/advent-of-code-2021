@@ -53,16 +53,14 @@ int Solve2(string[][][] input)
     return result;
 }
 
-// 7 : 8
-// 6 : 0 : !4 == 1
-// 6 : 6 : !1 == 1
-// 6 : 9
-// 5 : 2
-// 5 : 3 : 1
-// 5 : 5 : 6 - 5 = 2
-// 4 : 4
-// 3 : 7
-// 2 : 1
+// 0 vs 4 == 3
+//"abcefg".Count(x => "bcdf".Any(y => y == x)).Dump();
+// 6 vs 1 == 1
+//"abdefg".Count(x => "cf".Any(y => y == x)).Dump();
+// 5 vs 6 == 5
+//"abdfg".Count(x => "abdefg".Any(y => y == x)).Dump();
+// 3 vs 9 == 5
+//"acdfg".Count(x => "abcdgf".Any(y => y == x)).Dump();
 
 Dictionary<int, string> GetPatterns(string[][] line)
 {
