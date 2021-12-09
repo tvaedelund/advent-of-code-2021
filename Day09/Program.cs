@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 
 var sw = Stopwatch.StartNew();
 
@@ -6,7 +7,7 @@ var input = File.ReadAllLines("input.txt")
     .Select(l => l.ToCharArray().Select(c => (int)c - 48).ToArray())
     .ToArray();
 
-var visited = new List<(int y, int x)>();
+var visited = new ConcurrentBag<(int y, int x)>();
 
 Console.WriteLine($"Part1: {Solve1(input)}");
 Console.WriteLine($"Part2: {Solve2(input)}");
@@ -15,14 +16,15 @@ Console.WriteLine($"TID DET TIG: {sw.ElapsedMilliseconds}ms");
 int Solve1(int[][] data)
 {
     var lowPoints = new List<int>();
+
     for (int y = 0; y < data.Length; y++)
-    for (int x = 0; x < data[y].Length; x++)
-    {
-        if (IsLowPoint(y, x, data))
+        for (int x = 0; x < data[y].Length; x++)
         {
-            lowPoints.Add(int.Parse(data[y][x].ToString()));
+            if (IsLowPoint(y, x, data))
+            {
+                lowPoints.Add(int.Parse(data[y][x].ToString()));
+            }
         }
-    }
 
     return lowPoints.Select(x => x + 1).Sum();
 }
@@ -42,14 +44,19 @@ bool IsLowPoint(int y, int x, int[][] data)
 int Solve2(int[][] data)
 {
     var result = new List<int>();
-    for (int y = 0; y < data.Length; y++)
-    for (int x = 0; x < data[y].Length; x++)
+
+    Parallel.For(0, data.Length, y =>
     {
-        if (IsLowPoint(y, x, data))
+        Parallel.For(0, data[y].Length, x =>
         {
-            result.Add(GetBasin(y, x, data, 1));
-        }
-    }
+            if (IsLowPoint(y, x, data))
+            {
+                result.Add(GetBasin(y, x, data, 1));
+            }
+        });
+
+    });
+
     return result.OrderByDescending(x => x).Take(3).Aggregate((r, c) => r * c);
 }
 
@@ -68,7 +75,7 @@ int GetBasin(int y, int x, int[][] data, int cnt)
         cnt += GetBasin(y, x - 1, data, 1);
     }
 
-    var xm = x < data[y].Length - 1? data[y][x + 1] : 9;
+    var xm = x < data[y].Length - 1 ? data[y][x + 1] : 9;
     if (xm < 9)
     {
         cnt += GetBasin(y, x + 1, data, 1);
