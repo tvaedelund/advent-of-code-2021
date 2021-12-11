@@ -1,18 +1,22 @@
-﻿var input = File.ReadAllLines("input.txt")
-    .ToArray();
+﻿using System.Diagnostics;
 
-var octos = (from y in Enumerable.Range(0, 10)
-             from x in Enumerable.Range(0, 10)
-             select new KeyValuePair<Pos, int>(new Pos(x, y), int.Parse(input[y][x].ToString())))
-            .ToDictionary(x => x.Key, x => x.Value);
+var sw = Stopwatch.StartNew();
 
-Console.WriteLine($"Part1: {Solve(octos, 100)}");
+var input = File.ReadAllLines("input.txt");
+
+Console.WriteLine($"Part1: {Solve(GetOctos(input), 100)}");
+Console.WriteLine($"Time: {sw.ElapsedMilliseconds}ms");
+
+sw.Restart();
+Console.WriteLine($"Part2: {Solve(GetOctos(input), int.MaxValue)}");
+Console.WriteLine($"Time: {sw.ElapsedMilliseconds}ms");
 
 int Solve(Dictionary<Pos, int> data, int steps)
 {
     var result = 0;
+    var step = 0;
 
-    while (steps-- > 0)
+    while (step++ < steps)
     {
         var flashed = new List<Pos>();
         var queue = new Queue<Pos>();
@@ -33,13 +37,14 @@ int Solve(Dictionary<Pos, int> data, int steps)
             var pos = queue.Dequeue();
             flashed.Add(pos);
 
+            // gets adjacent only within range
             var adjacent = GetAdjacent(pos).Where(x => data.ContainsKey(x));
-            foreach (var a in adjacent)
+            foreach (var key in adjacent)
             {
-                data[a]++;
-                if (data[a] == 10)
+                data[key]++;
+                if (data[key] == 10)
                 {
-                    queue.Enqueue(a);
+                    queue.Enqueue(key);
                 }
             }
         }
@@ -50,10 +55,25 @@ int Solve(Dictionary<Pos, int> data, int steps)
             data[pos] = 0;
         }
 
+        // part 2
+        if (data.Sum(o => o.Value) == 0)
+        {
+            return step;
+        }
+
+        // part 1
         result += flashed.Count();
     }
 
     return result;
+}
+
+Dictionary<Pos, int> GetOctos(string[] data)
+{
+    return (from y in Enumerable.Range(0, 10)
+            from x in Enumerable.Range(0, 10)
+            select new KeyValuePair<Pos, int>(new Pos(x, y), int.Parse(data[y][x].ToString())))
+            .ToDictionary(x => x.Key, x => x.Value);
 }
 
 IEnumerable<Pos> GetAdjacent(Pos pos)
