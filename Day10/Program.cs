@@ -6,22 +6,26 @@ var input = File.ReadAllLines("input.txt");
 
 var chunks = new[]
 {
-    ('(', ')', 3),
-    ('[', ']', 57),
-    ('{', '}', 1197),
-    ('<', '>', 25137)
+    ('(', ')', 3, 1),
+    ('[', ']', 57, 2),
+    ('{', '}', 1197, 3),
+    ('<', '>', 25137, 4)
 };
 
-Console.WriteLine($"Part 1: {Solve(input)}");
+var result = Solve(input);
+Console.WriteLine($"Part 1: {result.p1}");
+Console.WriteLine($"Part 2: {result.p2}");
 Console.WriteLine($"Time: {sw.ElapsedMilliseconds}ms");
 
-int Solve(string[] input)
+(int p1, long p2) Solve(string[] input)
 {
-    var result = new List<int>();
+    var p1 = new List<int>();
+    var p2 = new List<long>();
 
     foreach (var line in input)
     {
         var stack = new Stack<char>();
+        var isCorrupt = false;
 
         foreach (var ch in line)
         {
@@ -33,22 +37,30 @@ int Solve(string[] input)
             // closing
             else
             {
-                // if matching opening exists
+                // if matching opening exists remove it
                 var chunk = chunks.Single(c => c.Item2 == ch);
                 if (stack.Peek() == chunk.Item1)
                 {
                     stack.Pop();
                 }
+                // else it's corrupt
                 else
                 {
-                    result.Add(chunk.Item3);
+                    // part1
+                    p1.Add(chunk.Item3);
+                    isCorrupt = true;
                     break;
                 }
             }
         }
+
+        if (!isCorrupt)
+        {
+            p2.Add(stack.Select(x => chunks
+                    .Single(c => c.Item1 == x).Item4)
+                .Aggregate(0L, (a, v) => a * 5 + v));
+        }
     }
 
-    return result.Sum();
+    return (p1.Sum(), p2.OrderBy(x => x).ElementAt(p2.Count / 2));
 }
-
-
