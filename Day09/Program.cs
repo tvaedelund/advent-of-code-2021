@@ -1,97 +1,88 @@
-﻿using System.Collections.Concurrent;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 
 var sw = Stopwatch.StartNew();
 
-var input = File.ReadAllLines("input.txt")
-    .Select(l => l.ToCharArray().Select(c => (int)c - 48).ToArray())
-    .ToArray();
-
-var visited = new ConcurrentBag<(int y, int x)>();
+var input = File.ReadAllLines("input.txt");
 
 Console.WriteLine($"Part1: {Solve1(input)}");
+Console.WriteLine($"Time: {sw.ElapsedMilliseconds}ms");
+
+sw.Restart();
 Console.WriteLine($"Part2: {Solve2(input)}");
-Console.WriteLine($"TID DET TIG: {sw.ElapsedMilliseconds}ms");
+Console.WriteLine($"Time: {sw.ElapsedMilliseconds}ms");
 
-int Solve1(int[][] data)
+int Solve1(string[] data)
 {
-    var lowPoints = new List<int>();
+    var result = 0;
+    var map = GetMap(data);
 
-    for (int y = 0; y < data.Length; y++)
-        for (int x = 0; x < data[y].Length; x++)
+    foreach (var pos in map)
+    {
+        var adjacent = GetAdjacent(pos.Key).Where(key => map.ContainsKey(key));
+
+        result += adjacent.All(key => map[key] > pos.Value) ? pos.Value + 1 : 0;
+    }
+
+    return result;
+}
+
+
+int Solve2(string[] data)
+{
+    var result = new List<int>();
+    var map = GetMap(data);
+
+    foreach (var pos in map)
+    {
+        var adjacent = GetAdjacent(pos.Key).Where(key => map.ContainsKey(key));
+        var queue = new Queue<Pos>();
+        var count = 0;
+        var visited = new HashSet<Pos>();
+
+        if (adjacent.All(key => map[key] > pos.Value))
         {
-            if (IsLowPoint(y, x, data))
+            queue.Enqueue(pos.Key);
+
+            while (queue.Any())
             {
-                lowPoints.Add(int.Parse(data[y][x].ToString()));
+                var current = queue.Dequeue();
+                count++;
+
+                adjacent = GetAdjacent(current).Where(key => map.ContainsKey(key) && map[key] < 9 && map[key] > map[current] && !visited.Contains(key));
+                foreach (var item in adjacent)
+                {
+                    queue.Enqueue(item);
+                    visited.Add(item);
+                }
             }
         }
 
-    return lowPoints.Select(x => x + 1).Sum();
-}
-
-bool IsLowPoint(int y, int x, int[][] data)
-{
-    var adjacent = new[] {
-        y > 0 ? data[y - 1][x] : 9,
-        x > 0 ? data[y][x - 1] : 9,
-        x < data[y].Length - 1 ? data[y][x + 1] : 9,
-        y < data.Length - 1 ? data[y + 1][x] : 9,
-    };
-
-    return adjacent.All(c => c > data[y][x]);
-}
-
-int Solve2(int[][] data)
-{
-    var result = new List<int>();
-
-    Parallel.For(0, data.Length, y =>
-    {
-        Parallel.For(0, data[y].Length, x =>
+        if (count > 0)
         {
-            if (IsLowPoint(y, x, data))
-            {
-                result.Add(GetBasin(y, x, data, 1));
-            }
-        });
+            result.Add(count);
+        }
+    }
 
-    });
-
-    return result.OrderByDescending(x => x).Take(3).Aggregate((r, c) => r * c);
+    return result.Where(x => x > 0).OrderByDescending(x => x).Take(3).Aggregate(1, (a, v) => a * v);
 }
 
-int GetBasin(int y, int x, int[][] data, int cnt)
+Dictionary<Pos, int> GetMap(string[] data)
 {
-    if (visited.Any(p => p.y == y && p.x == x))
-    {
-        return 0;
-    }
-
-    visited.Add((y, x));
-
-    var xs = x > 0 ? data[y][x - 1] : 9;
-    if (xs < 9)
-    {
-        cnt += GetBasin(y, x - 1, data, 1);
-    }
-
-    var xm = x < data[y].Length - 1 ? data[y][x + 1] : 9;
-    if (xm < 9)
-    {
-        cnt += GetBasin(y, x + 1, data, 1);
-    }
-
-    var ys = y > 0 ? data[y - 1][x] : 9;
-    if (ys < 9)
-    {
-        cnt += GetBasin(y - 1, x, data, 1);
-    }
-
-    var ym = y < data.Length - 1 ? data[y + 1][x] : 9;
-    if (ym < 9)
-    {
-        cnt += GetBasin(y + 1, x, data, 1);
-    }
-
-    return cnt;
+    return (from y in Enumerable.Range(0, data.Length)
+            from x in Enumerable.Range(0, data[0].Length)
+            select new KeyValuePair<Pos, int>(new Pos(x, y), int.Parse(data[y][x].ToString())))
+               .ToDictionary(x => x.Key, x => x.Value);
 }
+
+IEnumerable<Pos> GetAdjacent(Pos pos)
+{
+    return new[]
+    {
+        new Pos(pos.x, pos.y - 1),
+        new Pos(pos.x + 1, pos.y),
+        new Pos(pos.x, pos.y + 1),
+        new Pos(pos.x - 1, pos.y),
+    };
+}
+
+record Pos(int x, int y);
