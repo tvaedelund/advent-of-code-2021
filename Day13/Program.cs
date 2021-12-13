@@ -7,10 +7,10 @@ var input = File.ReadAllLines("input.txt");
 Console.WriteLine($"Part 1: {Solve(input, 1)}");
 Console.WriteLine($"Time: {sw.ElapsedMilliseconds}ms");
 
-// sw.Restart();
-// Console.WriteLine();
-// Console.WriteLine($"Part 2: {Solve(input)}");
-// Console.WriteLine($"Time: {sw.ElapsedMilliseconds}ms");
+sw.Restart();
+Console.WriteLine();
+Console.WriteLine($"Part 2: {Solve(input, 100)}");
+Console.WriteLine($"Time: {sw.ElapsedMilliseconds}ms");
 
 int Solve(string[] input, int v)
 {
@@ -19,23 +19,34 @@ int Solve(string[] input, int v)
 
     foreach (var instr in instructions)
     {
-        dots = instr.dir == 'y' ? FoldY(dots, instr.line) : FoldX(dots, instr.line);
+        if (instr.dir == 'y')
+        {
+            dots = FoldY(dots, instr.line);
+        }
+        else
+        {
+            dots = FoldX(dots, instr.line);
+        }
+    }
+
+    if (v > 1)
+    {
+        PrintCode(dots);
     }
 
     return dots.Count();
 }
 
-IEnumerable<Pos> FoldY(IEnumerable<Pos> dots, int v)
+IEnumerable<Pos> FoldY(IEnumerable<Pos> dots, int line)
 {
     var folded = new List<Pos>();
-    var maxY = dots.Max(d => d.y);
 
-    foreach (var dot in dots.Where(d => d.y > v))
+    foreach (var dot in dots.Where(d => d.y > line))
     {
-        folded.Add(dot with { y = Math.Abs(dot.y - maxY) });
+        folded.Add(dot with { y = Math.Abs(dot.y - line * 2) });
     }
 
-    foreach (var dot in dots.Where(d => d.y < v))
+    foreach (var dot in dots.Where(d => d.y < line))
     {
         if (!folded.Any(d => d.x == dot.x && d.y == dot.y))
         {
@@ -43,20 +54,19 @@ IEnumerable<Pos> FoldY(IEnumerable<Pos> dots, int v)
         }
     }
 
-    return folded.OrderBy(d => d.y).ThenBy(d => d.x);
+    return folded;
 }
 
-IEnumerable<Pos> FoldX(IEnumerable<Pos> dots, int v)
+IEnumerable<Pos> FoldX(IEnumerable<Pos> dots, int line)
 {
     var folded = new List<Pos>();
-    var maxX = dots.Max(d => d.x);
 
-    foreach (var dot in dots.Where(d => d.x > v))
+    foreach (var dot in dots.Where(d => d.x > line))
     {
-        folded.Add(dot with { x = Math.Abs(dot.x - maxX) });
+        folded.Add(dot with { x = Math.Abs(dot.x - line * 2) });
     }
 
-    foreach (var dot in dots.Where(d => d.x < v))
+    foreach (var dot in dots.Where(d => d.x < line))
     {
         if (!folded.Any(d => d.x == dot.x && d.y == dot.y))
         {
@@ -64,7 +74,7 @@ IEnumerable<Pos> FoldX(IEnumerable<Pos> dots, int v)
         }
     }
 
-    return folded.Distinct();
+    return folded;
 }
 
 IEnumerable<Pos> GetDots(string[] data)
@@ -92,6 +102,18 @@ IEnumerable<Instruction> GetInstructions(string[] data)
         {
             yield return new Instruction(match.Groups["dir"].Value[0], int.Parse(match.Groups["line"].Value));
         }
+    }
+}
+
+void PrintCode(IEnumerable<Pos> dots)
+{
+    for (int y = 0; y < dots.Max(d => d.y) + 1; y++)
+    {
+        for (int x = 0; x < dots.Max(d => d.x) + 1; x++)
+        {
+            Console.Write(dots.Any(d => d.x == x && d.y == y) ? "#" : ".");
+        }
+        Console.WriteLine();
     }
 }
 
