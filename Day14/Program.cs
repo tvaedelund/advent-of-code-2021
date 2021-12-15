@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 
 var sw = Stopwatch.StartNew();
-var input = File.ReadAllLines("input.txt");
+var input = File.ReadAllLines("_input.txt");
 
 Console.WriteLine($"Part 1: {Solve(input, 10)}");
 Console.WriteLine($"Time: {sw.ElapsedMilliseconds}ms");
@@ -13,38 +13,43 @@ Console.WriteLine($"Time: {sw.ElapsedMilliseconds}ms");
 
 int Solve(string[] input, int v)
 {
-    var template = input[0];
-    var formula = input[2..]
-        .Select(x => x.Split(" -> "));
-
-    for (int step = 1; step <= v; step++)
-    {
-        template = GetResult(formula, template);
-    }
-
-    var elements = template
-        .GroupBy(c => c)
+    var polymer = Enumerable.Zip(input[0], input[0].Skip(1))
+        .Select(p => $"{p.First}{p.Second}")
+        .GroupBy(e => e)
         .Select(grp => new
         {
             chr = grp.Key,
             cnt = grp.Count()
         })
-        .OrderBy(grp => grp.cnt);
+        .ToDictionary(grp => grp.chr, grp => grp.cnt);
 
-    return elements.Last().cnt - elements.First().cnt;
-}
+    var elements = input[0].Select(chr => chr)
+        .GroupBy(e => e)
+        .Select(grp => new
+        {
+            chr = grp.Key,
+            cnt = grp.Count()
+        })
+        .ToDictionary(grp => grp.chr, grp => grp.cnt);
 
-string GetResult(IEnumerable<string[]> formula, string template)
-{
-    var result = from t in Enumerable.Zip(template, template.Skip(1))
-                 join f in formula
-                 on new { a = t.First, b = t.Second }
-                 equals new { a = f[0][0], b = f[0][1] }
-                 into gj
-                 from subf in gj.DefaultIfEmpty()
-                 select new { a = t.First, b = subf?[1] ?? string.Empty, c = t.Second };
+    var formula = input[2..]
+        .Select(x => x.Split(" -> "))
+        .ToDictionary(x => x[0], x=> x[1][0]);
 
-    var test = result.Aggregate(string.Empty, (a, c) => $"{a}{c.a}{c.b}{(!string.IsNullOrEmpty(c.b) ? string.Empty : c.c)}");
+    for (int step = 1; step <= v; step++)
+    {
+        var found = new Dictionary<string, int>();
+        foreach (var ab in polymer.Keys)
+        {
+            (char a, char n, char b, int count) = (ab[0], formula[ab], ab[1], found.GetValueOrDefault(ab));
 
-    return $"{test}{template.Last()}";
+            found[$"{a}{n}"] = polymer.GetValueOrDefault($"{a}{n}") + count;
+            found[$"{n}{b}"] = polymer.GetValueOrDefault($"{n}{b}") + count;
+
+            elements[n] = elements.GetValueOrDefault(n) + count;
+        }
+        polymer = found;
+    }
+
+    return elements.Values.Max() - elements.Values.Min();
 }
