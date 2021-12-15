@@ -9,7 +9,8 @@ Console.WriteLine($"Time: {sw.ElapsedMilliseconds}ms");
 
 sw.Restart();
 Console.WriteLine();
-Console.WriteLine($"Part 2: {Solve(input, 100)}");
+Console.WriteLine($"Part 2:");
+_ = Solve(input, 100);
 Console.WriteLine($"Time: {sw.ElapsedMilliseconds}ms");
 
 int Solve(string[] input, int v)
