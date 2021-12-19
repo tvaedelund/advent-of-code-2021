@@ -1,33 +1,33 @@
 ﻿using System.Diagnostics;
 
 var sw = Stopwatch.StartNew();
-var input = "target area: x=20..30, y=-10..-5";
 
+// Test input
 // const int minX = 20;
 // const int maxX = 30;
 // const int minY = -10;
 // const int maxY = -5;
 
+// Actual input
 const int minX = 111;
 const int maxX = 161;
 const int minY = -154;
 const int maxY = -101;
 
-Console.WriteLine($"Part 1: {Solve(input)}");
+var result = Solve();
+
+Console.WriteLine($"Part 1: {result.p1}");
+Console.WriteLine($"Part 2: {result.p2}");
 Console.WriteLine($"Time: {sw.ElapsedMilliseconds}ms");
 
-// sw.Restart();
-// Console.WriteLine();
-// Console.WriteLine($"Part 2: {Solve(input)}");
-// Console.WriteLine($"Time: {sw.ElapsedMilliseconds}ms");
-
-int Solve(string input)
+(int p1, int p2) Solve()
 {
     var max = 0;
+    var count = 0;
 
-    for (int xV = 2; xV <= maxX; xV++)
+    for (int xV = 1; xV <= maxX; xV++)
     {
-        for (int yV = 2; yV < 300; yV++)
+        for (int yV = minY; yV < 200; yV++)
         {
             var yTracker = new HashSet<int>();
             var current = new Probe(0, 0, xV, yV);
@@ -40,6 +40,7 @@ int Solve(string input)
                 if (IsInTargetArea(next))
                 {
                     max = yTracker.Max() > max ? yTracker.Max() : max;
+                    count++;
                     break;
                 }
 
@@ -48,7 +49,7 @@ int Solve(string input)
         }
     }
 
-    return max;
+    return (max, count);
 }
 
 Probe GetNextPos(Probe probe)
