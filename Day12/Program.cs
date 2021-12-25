@@ -3,26 +3,26 @@
 var sw = Stopwatch.StartNew();
 
 var input = File.ReadAllLines("input.txt");
-Console.WriteLine($"Part 1: {Solve(input)}");
+Console.WriteLine($"Part 1: {Solve(input, false)}");
 Console.WriteLine($"Time: {sw.ElapsedMilliseconds}ms");
 
-// sw.Restart();
-// Console.WriteLine();
-// Console.WriteLine($"Part 2: {Solve(input)}");
-// Console.WriteLine($"Time: {sw.ElapsedMilliseconds}ms");
+sw.Restart();
+Console.WriteLine();
+Console.WriteLine($"Part 2: {Solve(input, true)}");
+Console.WriteLine($"Time: {sw.ElapsedMilliseconds}ms");
 
-int Solve(string[] input)
+int Solve(string[] input, bool p2)
 {
     var caves = GetConnections(input);
 
-    var result = TraverseCaves(caves, "start", new()); ;
+    var result = TraverseCaves(caves, "start", new(), p2); ;
 
     return result;
 }
 
-int TraverseCaves(Dictionary<string, string[]> caves, string current, List<string> visitedCaves)
+int TraverseCaves(Dictionary<string, string[]> caves, string current, Dictionary<string, int> visitedCaves, bool p2)
 {
-    visitedCaves.Add(current);
+    visitedCaves[current] = visitedCaves.GetValueOrDefault(current) + 1;
 
     if (current == "end")
     {
@@ -31,14 +31,15 @@ int TraverseCaves(Dictionary<string, string[]> caves, string current, List<strin
 
     var count = 0;
 
-    foreach (var caveToVisit in caves[current])
+    foreach (var caveToVisit in caves[current].Where(c => c != "start"))
     {
         var bigCave = caveToVisit.ToUpper() == caveToVisit;
-        var visited = visitedCaves.Select(v => v).Contains(caveToVisit);
+        var visited = visitedCaves.GetValueOrDefault(caveToVisit);
+        var anyVisitedTwice = visitedCaves.Any(c => c.Key.ToLower() == c.Key && c.Value > 1);
 
-        if (bigCave || !visited)
+        if (bigCave || visited == 0 || (p2 && !anyVisitedTwice))
         {
-            count += TraverseCaves(caves, caveToVisit, new(visitedCaves));
+            count += TraverseCaves(caves, caveToVisit, new(visitedCaves), p2);
         }
     }
 
