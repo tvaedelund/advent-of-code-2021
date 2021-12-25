@@ -2,7 +2,7 @@
 
 var sw = Stopwatch.StartNew();
 
-var input = File.ReadAllLines("____input.txt");
+var input = File.ReadAllLines("input.txt");
 Console.WriteLine($"Part 1: {Solve(input)}");
 Console.WriteLine($"Time: {sw.ElapsedMilliseconds}ms");
 
@@ -13,51 +13,50 @@ Console.WriteLine($"Time: {sw.ElapsedMilliseconds}ms");
 
 int Solve(string[] input)
 {
-    var caves = GetCaves(input)
-        .Where(c => c.to != "start" && c.from != "end")
-        .ToList();
+    var caves = GetConnections(input);
 
-    foreach (var cave in caves.Where(c => c.from == "start"))
-    {
-        var test = TraverseCaves(caves, cave, new() { cave.from }, 0);
-    }
+    var result = TraverseCaves(caves, "start", new()); ;
 
-    return 0;    
+    return result;
 }
 
-int TraverseCaves(IEnumerable<Cave> caves, Cave current, List<string> visitedCaves, int count)
+int TraverseCaves(Dictionary<string, string[]> caves, string current, List<string> visitedCaves)
 {
-    var bigCave = current.from.ToUpper() == current.from;
-    var visited = visitedCaves.Select(v => v).Contains(current.to);
-    var endCave = current.to == "end";
+    visitedCaves.Add(current);
 
-    if (endCave)
+    if (current == "end")
     {
-        count++;
+        return 1;
     }
-    else if (bigCave || !visited)
+
+    var count = 0;
+
+    foreach (var caveToVisit in caves[current])
     {
-        visitedCaves.Add(current.to);
+        var bigCave = caveToVisit.ToUpper() == caveToVisit;
+        var visited = visitedCaves.Select(v => v).Contains(caveToVisit);
 
-        var cavesToVisit = caves.Where(c => c.from == current.to);
-
-        foreach (var caveToVisit in cavesToVisit)
+        if (bigCave || !visited)
         {
-            count = TraverseCaves(caves, caveToVisit, visitedCaves, count);
+            count += TraverseCaves(caves, caveToVisit, new(visitedCaves));
         }
     }
 
     return count;
 }
 
-IEnumerable<Cave> GetCaves(string[] data)
+Dictionary<string, string[]> GetConnections(string[] data)
 {
-    foreach (var line in data)
-    {
-        var splitLine = line.Split('-');
-        yield return new Cave(splitLine[0], splitLine[1]);
-        yield return new Cave(splitLine[1], splitLine[0]);
-    }
-}
+    var cartesian =
+        from line in input
+        let caves = line.Split("-")
+        from c in new[] { (From: caves[0], To: caves[1]), (From: caves[1], To: caves[0]) }
+        select c;
 
-record Cave(string from, string to);
+    var connections =
+        from connection in cartesian
+        group connection by connection.From into grp
+        select new KeyValuePair<string, string[]>(grp.Key, grp.Select(connection => connection.To).ToArray());
+
+    return connections.ToDictionary(x => x.Key, x => x.Value);
+}
