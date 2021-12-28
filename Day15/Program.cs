@@ -3,22 +3,20 @@
 var sw = Stopwatch.StartNew();
 var input = File.ReadAllLines("input.txt");
 
-Console.WriteLine($"Part 1: {Solve(input)}");
+Console.WriteLine($"Part 1: {Solve(GetMap(input, 1))}");
 Console.WriteLine($"Time: {sw.ElapsedMilliseconds}ms");
 
-// sw.Restart();
-// Console.WriteLine();
-// Console.WriteLine($"Part 2: {Solve(input, 100)}");
-// Console.WriteLine($"Time: {sw.ElapsedMilliseconds}ms");
+sw.Restart();
+Console.WriteLine();
+Console.WriteLine($"Part 2: {Solve(GetMap(input, 5))}");
+Console.WriteLine($"Time: {sw.ElapsedMilliseconds}ms");
 
 // https://www.youtube.com/watch?v=CerlT7tTZfY
 // https://www.youtube.com/watch?v=6fIQT_y5GgA&t=1209s
-int Solve(string[] data)
+int Solve(Dictionary<Pos, int> map)
 {
-    var map = GetMap(data);
-
     var startPos = new Pos(0, 0);
-    var endPos = new Pos(data[0].Length - 1, data.Length - 1);
+    var endPos = new Pos(map.Keys.MaxBy(p => p.x)!.x, map.Keys.MaxBy(p => p.y)!.y);
 
     var accumulatedRiskMap = new Dictionary<Pos, int>();
     accumulatedRiskMap[startPos] = 0;
@@ -51,13 +49,21 @@ int Solve(string[] data)
     return accumulatedRiskMap[endPos];
 }
 
-
-Dictionary<Pos, int> GetMap(string[] data)
+Dictionary<Pos, int> GetMap(string[] data, int times)
 {
-    return (from y in Enumerable.Range(0, data.Length)
-            from x in Enumerable.Range(0, data[0].Length)
-            select new KeyValuePair<Pos, int>(new Pos(x, y), int.Parse(data[y][x].ToString())))
-               .ToDictionary(x => x.Key, x => x.Value);
+    var ySize = data.Length;
+    var xSize = data[0].Length;
+
+    var map = from y in Enumerable.Range(0, ySize * times)
+              from x in Enumerable.Range(0, xSize * times)
+
+              let distance = (y / ySize) + (x / xSize)
+              let riskLevel = int.Parse(data[y % ySize][x % xSize].ToString())
+              let newRiskLevel = (riskLevel + distance - 1) % 9 + 1
+
+              select new KeyValuePair<Pos, int>(new Pos(x, y), newRiskLevel);
+
+    return map.ToDictionary(x => x.Key, x => x.Value);
 }
 
 IEnumerable<Pos> GetAdjacent(Pos pos)
